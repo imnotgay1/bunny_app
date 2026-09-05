@@ -250,9 +250,11 @@
       <div class="star-counter" id="starCounter">⭐ 0</div>
       <button class="icon-btn" id="langBtn" onclick="showScreen('screen-language')">🌐</button>
       <button class="icon-btn" onclick="openCollection()">🏆</button>
+      <button class="icon-btn" id="loadVideosBtn" onclick="document.getElementById('videoFileInput').click()" style="display:none;">📁</button>
       <button class="icon-btn home-btn" id="homeBtn" onclick="goHome()">🏠</button>
     </div>
   </header>
+  <input type="file" id="videoFileInput" accept="video/*" multiple style="display:none;">
 
   <div class="tabbar" id="tabbar" style="display:none;"></div>
 
@@ -633,6 +635,7 @@ function shadeColor(hex, percent){
 /* ---------- 언어 선택 ---------- */
 function selectLanguage(lang){
   currentLanguage = lang;
+  document.getElementById('loadVideosBtn').style.display = (lang === 'vid') ? 'flex' : 'none';
   document.getElementById('appTitle').textContent = APP_TITLES[lang];
   document.getElementById('homeSubtitle').textContent = lang === 'ko' ? '오늘은 뭐 배울까?' : (lang === 'vid' ? '오늘은 어떤 영상을 볼까?' : '오늘은 뭐하고 놀까?');
   buildHome();
@@ -705,6 +708,31 @@ function openTopicEN(key){
 function slugify(word){
   return word.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 }
+/* 기기에서 직접 고른 영상 (폴더/호스팅 없이 즉석에서 불러오기) */
+const loadedVideoBlobs = {};
+function toast(msg){
+  const bubble = document.createElement('div');
+  bubble.className = 'praise-bubble';
+  bubble.textContent = msg;
+  document.body.appendChild(bubble);
+  bubble.style.left = '50%'; bubble.style.top = '86px';
+  requestAnimationFrame(()=> bubble.classList.add('show'));
+  setTimeout(()=> bubble.remove(), 1400);
+}
+document.getElementById('videoFileInput').addEventListener('change', (e) => {
+  const files = Array.from(e.target.files || []);
+  files.forEach(file => {
+    const base = file.name.replace(/\.[^.]+$/, '');
+    const slug = slugify(base);
+    if (loadedVideoBlobs[slug]) URL.revokeObjectURL(loadedVideoBlobs[slug]);
+    loadedVideoBlobs[slug] = URL.createObjectURL(file);
+  });
+  if (files.length) toast(`🎬 영상 ${files.length}개 불러옴!`);
+  if (currentLanguage === 'vid' && document.getElementById('screen-play').classList.contains('active') && currentCatKey) {
+    openTopic(currentCatKey);
+  }
+  e.target.value = '';
+});
 let videoObserver = null;
 function getVideoObserver(){
   if (videoObserver) return videoObserver;
@@ -720,17 +748,22 @@ function getVideoObserver(){
   return videoObserver;
 }
 function observeVideoThumb(thumbEl, item){
+  if (loadedVideoBlobs[slugify(item.word)]) { loadVideoThumb(thumbEl, item); return; }
   thumbEl.dataset.word = item.word;
   thumbEl.dataset.emoji = item.emoji;
   getVideoObserver().observe(thumbEl);
 }
 function loadVideoThumb(thumbEl, info){
   if (!thumbEl) return;
+  const slug = slugify(info.word);
   const video = document.createElement('video');
-  video.muted = true; video.loop = true; video.playsInline = true; video.preload = 'metadata';
+  video.setAttribute('muted', ''); video.setAttribute('playsinline', ''); video.setAttribute('webkit-playsinline', '');
+  video.muted = true; video.loop = true; video.playsInline = true; video.preload = 'auto';
+  const tryPlay = () => { video.play().catch(()=>{}); };
   video.onerror = () => { thumbEl.innerHTML = `<div class="fallback-emoji">${info.emoji}</div>`; };
-  video.onloadeddata = () => { video.play().catch(()=>{}); };
-  video.src = `videos/${slugify(info.word)}.mp4`;
+  video.onloadeddata = tryPlay;
+  video.oncanplay = tryPlay;
+  video.src = loadedVideoBlobs[slug] || `videos/${slug}.mp4`;
   thumbEl.innerHTML = '';
   thumbEl.appendChild(video);
 }
