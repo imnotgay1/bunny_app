@@ -240,10 +240,26 @@
   @keyframes confetti-fly{
     to{ transform: translate(var(--dx), var(--dy)) scale(0.4) rotate(200deg); opacity:0; }
   }
+
+  .video-modal{
+    position:fixed; inset:0; background:rgba(10,10,15,0.92); z-index:2000;
+    display:none; align-items:center; justify-content:center;
+  }
+  .video-modal.show{ display:flex; }
+  .video-modal video{ max-width:94%; max-height:82%; border-radius:18px; background:black; }
+  .video-modal-close{
+    position:absolute; top:18px; right:18px; width:48px; height:48px; border-radius:50%;
+    background:white; border:none; font-size:22px; z-index:2001;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  }
 </style>
 </head>
 <body>
 <div id="app">
+  <div class="video-modal" id="videoModal" onclick="if(event.target.id==='videoModal') closeVideoModal();">
+    <button class="video-modal-close" onclick="closeVideoModal()">✕</button>
+    <video id="videoModalPlayer" controls playsinline></video>
+  </div>
   <header>
     <div class="logo"><span class="bunny" id="bunny">🐰</span><span id="appTitle">토끼별 놀이터</span></div>
     <div class="header-right">
@@ -778,18 +794,33 @@ function openTopicVID(key){
     const thumbId = `thumb-vid-${key}-${item.word.replace(/\s+/g,'_')}`;
     card.innerHTML = `<div class="thumb" id="${thumbId}"><div class="spinner"></div></div><div class="word">${item.word}</div>`;
     card.onclick = () => {
-      playChime();
-      setTimeout(()=> speak(item.word, 'en-US'), 150);
-      const vidEl = document.querySelector(`#${thumbId} video`);
-      if (vidEl) { vidEl.currentTime = 0; vidEl.play().catch(()=>{}); }
+      const slug = slugify(item.word);
       card.classList.remove('bounce'); void card.offsetWidth; card.classList.add('bounce');
       setTimeout(()=> card.classList.remove('bounce'), 700);
       markDiscovered(key, item.word);
       addStar(1); showPraise(card); burstConfetti(card, 12);
+      setTimeout(()=> openVideoModal(item.word, slug), 200);
     };
     grid.appendChild(card);
     observeVideoThumb(document.getElementById(thumbId), item);
   });
+}
+function openVideoModal(word, slug){
+  const modal = document.getElementById('videoModal');
+  const player = document.getElementById('videoModalPlayer');
+  player.muted = false; player.loop = false;
+  player.src = loadedVideoBlobs[slug] || `videos/${slug}.mp4`;
+  player.onerror = () => { closeVideoModal(); speak(word, 'en-US'); };
+  modal.classList.add('show');
+  player.currentTime = 0;
+  player.play().catch(()=>{});
+  setTimeout(()=> speak(word, 'en-US'), 400);
+}
+function closeVideoModal(){
+  const modal = document.getElementById('videoModal');
+  const player = document.getElementById('videoModalPlayer');
+  player.pause(); player.removeAttribute('src'); player.load();
+  modal.classList.remove('show');
 }
 function openTopicKO(key){
   const cat = KO_CATEGORIES[key];
