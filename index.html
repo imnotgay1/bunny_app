@@ -810,11 +810,10 @@ function openVideoModal(word, slug){
   const player = document.getElementById('videoModalPlayer');
   player.muted = false; player.loop = false;
   player.src = loadedVideoBlobs[slug] || `videos/${slug}.mp4`;
-  player.onerror = () => { closeVideoModal(); speak(word, 'en-US'); };
+  player.onerror = () => { closeVideoModal(); };
   modal.classList.add('show');
   player.currentTime = 0;
   player.play().catch(()=>{});
-  setTimeout(()=> speak(word, 'en-US'), 400);
 }
 function closeVideoModal(){
   const modal = document.getElementById('videoModal');
