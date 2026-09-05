@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>토끼별 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:#FFF9EF;
+    font-family:'Nunito', sans-serif;
+    color:#26333D;
+    overflow:hidden;
+    touch-action: manipulation;
+    user-select:none;
+  }
+  #app{ height:100%; display:flex; flex-direction:column; }
+
+  header{
+    padding: 16px 22px 6px;
+    display:flex; align-items:center; justify-content:space-between;
+    flex-shrink:0;
+  }
+  .logo{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800; font-size: 20px; color: #FB7A5A;
+    display:flex; align-items:center; gap:8px;
+  }
+  .logo .bunny{ font-size:28px; display:inline-block; }
+  .logo .bunny.hop{ animation: hop 0.5s ease; }
+  @keyframes hop{
+    0%{ transform: translateY(0) rotate(0); }
+    30%{ transform: translateY(-12px) rotate(-10deg); }
+    60%{ transform: translateY(0) rotate(8deg); }
+    100%{ transform: translateY(0) rotate(0); }
+  }
+  .header-right{ display:flex; align-items:center; gap:8px; }
+  .star-counter{
+    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:15px; color:#F4A261;
+    background:white; padding:8px 14px; border-radius:999px;
+    box-shadow: 0 5px 0 rgba(38,51,61,0.12);
+  }
+  .icon-btn{
+    background:white; border:none; width:46px; height:46px;
+    border-radius:15px; font-size:19px; flex-shrink:0;
+    box-shadow: 0 5px 0 rgba(38,51,61,0.12);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .icon-btn:active{ transform: translateY(4px); box-shadow:none; }
+  .home-btn{ visibility:hidden; }
+  .home-btn.show{ visibility:visible; }
+
+  .tabbar{
+    display:flex; gap:8px; padding: 8px 22px 0;
+    flex-shrink:0; overflow-x:auto; white-space:nowrap;
+  }
+  .tabbar::-webkit-scrollbar{ display:none; }
+  .tab{
+    border:none; background: #F0EAD8; color: #8C8370;
+    font-family:'Baloo 2', sans-serif; font-weight:700; font-size:14px;
+    padding: 8px 13px; border-radius: 999px; flex-shrink:0;
+    display:flex; align-items:center; gap:5px;
+    transition: background .15s, color .15s;
+  }
+  .tab.active{ color:white; }
+
+  .screen{
+    flex:1; display:none; flex-direction:column;
+    padding: 12px 20px 18px; overflow:hidden;
+  }
+  .screen.active{ display:flex; }
+
+  .subtitle{
+    font-family:'Baloo 2', sans-serif; font-size:18px; font-weight:700;
+    opacity:0.75; margin: 4px 0 12px; flex-shrink:0;
+  }
+
+  /* 언어 선택 화면 */
+  #screen-language{ align-items:center; justify-content:center; }
+  .lang-title{
+    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:22px;
+    margin-bottom:22px; color:#26333D;
+  }
+  .lang-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; max-width:340px; }
+  .lang-card{
+    border:none; border-radius:24px; width:104px; height:140px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:8px; color:white; font-family:'Baloo 2', sans-serif; font-weight:800; font-size:15px;
+    box-shadow: 0 7px 0 rgba(0,0,0,0.15); position:relative; overflow:hidden;
+  }
+  .lang-card::before{
+    content:''; position:absolute; top:-25%; left:-15%; width:80%; height:80%;
+    background: radial-gradient(circle, rgba(255,255,255,0.32), transparent 70%);
+    pointer-events:none;
+  }
+  .lang-card .lang-emoji{ font-size:40px; position:relative; z-index:1; }
+  .lang-card > div{ position:relative; z-index:1; }
+  .lang-card:active{ transform: translateY(5px); box-shadow:none; }
+
+  .topic-grid, .badge-grid{
+    display:grid; grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 92px; gap:14px; overflow-y:auto; padding-bottom:8px;
+    flex:1; min-height:0;
+  }
+  .topic-grid.two-col{ grid-template-columns: repeat(2, 1fr); grid-auto-rows: 120px; }
+  .topic-card{
+    border:none; border-radius:22px; position:relative; overflow:hidden;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:6px; font-family:'Baloo 2', sans-serif; font-weight:700; font-size:15px;
+    color:white; box-shadow: 0 6px 0 rgba(0,0,0,0.14); padding: 8px;
+  }
+  .topic-card::before{
+    content:''; position:absolute; top:-25%; left:-15%; width:70%; height:70%;
+    background: radial-gradient(circle, rgba(255,255,255,0.32), transparent 70%);
+    pointer-events:none;
+  }
+  .icon-badge{
+    width:42px; height:42px; border-radius:13px; flex-shrink:0;
+    background: rgba(255,255,255,0.94);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; font-weight:800; color:#26333D; position:relative; z-index:1;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.16), inset 0 -2px 3px rgba(0,0,0,0.06);
+  }
+  .topic-card > div{ position:relative; z-index:1; }
+  .topic-card:active{ transform: translateY(4px); box-shadow:none; }
+  .topic-card .count{ font-size:11px; font-weight:600; opacity:0.85; }
+
+  .badge{
+    border-radius:22px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:5px; font-family:'Baloo 2', sans-serif; font-weight:700; font-size:13px;
+    color:#B8AE8C; background:#EDE7D8; padding:8px; text-align:center; position:relative; overflow:hidden;
+  }
+  .badge.complete::before{
+    content:''; position:absolute; top:-25%; left:-15%; width:70%; height:70%;
+    background: radial-gradient(circle, rgba(255,255,255,0.32), transparent 70%);
+    pointer-events:none;
+  }
+  .badge > div{ position:relative; z-index:1; }
+  .badge.complete{ color:white; }
+  .badge .icon-badge{ width:36px; height:36px; font-size:18px; border-radius:11px; }
+  .badge-progress{ font-size:11px; opacity:0.9; }
+
+  .play-header{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:10px; flex-shrink:0; gap:10px;
+  }
+  .play-header .topic-title{
+    font-family:'Baloo 2', sans-serif; font-size:20px; font-weight:800;
+  }
+  .quiz-btn{
+    font-family:'Baloo 2', sans-serif; font-weight:700; font-size:14px;
+    background:#FB7A5A; color:white; border:none; padding:9px 15px;
+    border-radius:14px; box-shadow: 0 5px 0 rgba(0,0,0,0.15); flex-shrink:0;
+  }
+  .quiz-btn:active{ transform: translateY(4px); box-shadow:none; }
+
+  .card-grid{
+    display:grid; grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 118px; gap:12px; overflow-y:auto; padding-bottom:10px;
+    flex:1; min-height:0;
+  }
+  .word-card, .letter-card{
+    border:none; border-radius:20px; background: #FFFFFF;
+    box-shadow: 0 6px 0 rgba(38,51,61,0.10);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:5px; padding: 6px; position:relative; overflow:hidden;
+  }
+  .thumb{
+    width: 72%; aspect-ratio: 1/1; border-radius: 14px; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+    background:#F4F1E8; transition: transform 0.25s cubic-bezier(.34,1.56,.64,1);
+  }
+  .letter-card .thumb{ width:44px; height:44px; aspect-ratio:unset; }
+  .thumb img{ width:100%; height:100%; object-fit:contain; }
+  .thumb video{ width:100%; height:100%; object-fit:contain; border-radius:inherit; }
+  .thumb .fallback-emoji{ font-size: min(6.5vw, 36px); }
+  .letter-card .thumb .fallback-emoji{ font-size:22px; }
+  .word-card .word{ font-family:'Baloo 2', sans-serif; font-weight:700; font-size: 14px; }
+  .letter-card .big-letter{
+    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:36px; line-height:1;
+    transition: transform 0.25s cubic-bezier(.34,1.56,.64,1);
+  }
+  .letter-card .example{ font-family:'Nunito', sans-serif; font-weight:700; font-size: 11px; opacity:0.75; }
+  .word-card:active, .letter-card:active{ transform: translateY(3px); box-shadow:none; }
+  .word-card.bounce .thumb{ transform: scale(1.16) rotate(-4deg); }
+  .letter-card.bounce .big-letter{ transform: scale(1.22) rotate(-4deg); }
+
+  .spinner{
+    width:20px; height:20px; border:4px solid #E3DCC8; border-top-color: #B8AE8C;
+    border-radius:50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  .word-card .spark, .letter-card .spark{ position:absolute; font-size:16px; opacity:0; pointer-events:none; }
+  .word-card.bounce .spark, .letter-card.bounce .spark{ animation: spark-fly 0.7s ease-out forwards; }
+  .spark.s1{ top:6%; left:5%; }
+  .spark.s2{ top:5%; right:5%; }
+  @keyframes spark-fly{
+    0%{ opacity:1; transform: scale(0.3) translateY(0); }
+    100%{ opacity:0; transform: scale(1.3) translateY(-16px); }
+  }
+
+  .quiz-grid{
+    display:grid; grid-template-columns: repeat(2, 1fr); grid-auto-rows: auto;
+    gap:16px; flex:1; min-height:0; overflow-y:auto; padding-bottom:8px; align-content:start;
+  }
+  .quiz-card{
+    border:none; border-radius:24px; background:white;
+    box-shadow: 0 6px 0 rgba(38,51,61,0.10);
+    display:flex; align-items:center; justify-content:center; padding:10px;
+    aspect-ratio: 1/1; overflow:hidden;
+  }
+  .quiz-card .thumb{ width:80%; }
+  .quiz-card .big-letter{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:50px; }
+  .quiz-card.shake{ animation: shake 0.4s; }
+  @keyframes shake{
+    0%,100%{ transform: translateX(0); } 25%{ transform: translateX(-8px); } 75%{ transform: translateX(8px); }
+  }
+  .quiz-card.correct-flash{ box-shadow: 0 0 0 5px #4CAF7D inset; }
+  .quiz-result{
+    grid-column: 1 / -1; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; gap:14px;
+  }
+
+  .praise-bubble{
+    position:fixed; transform:translate(-50%,-20px) scale(0.6); opacity:0;
+    background:white; color:#FB7A5A; font-family:'Baloo 2', sans-serif; font-weight:800; font-size:16px;
+    padding:8px 16px; border-radius:16px; box-shadow:0 6px 14px rgba(0,0,0,0.18);
+    pointer-events:none; z-index:999; transition: all .25s cubic-bezier(.34,1.56,.64,1);
+    white-space:nowrap;
+  }
+  .praise-bubble.show{ opacity:1; transform:translate(-50%,-64px) scale(1); }
+  .confetti-piece{
+    position:fixed; font-size:20px; pointer-events:none; z-index:998;
+    animation: confetti-fly 0.85s ease-out forwards;
+  }
+  @keyframes confetti-fly{
+    to{ transform: translate(var(--dx), var(--dy)) scale(0.4) rotate(200deg); opacity:0; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo"><span class="bunny" id="bunny">🐰</span><span id="appTitle">토끼별 놀이터</span></div>
+    <div class="header-right">
+      <div class="star-counter" id="starCounter">⭐ 0</div>
+      <button class="icon-btn" id="langBtn" onclick="showScreen('screen-language')">🌐</button>
+      <button class="icon-btn" onclick="openCollection()">🏆</button>
+      <button class="icon-btn home-btn" id="homeBtn" onclick="goHome()">🏠</button>
+    </div>
+  </header>
+
+  <div class="tabbar" id="tabbar" style="display:none;"></div>
+
+  <div class="screen active" id="screen-language">
+    <div class="lang-title">뭘 배워볼까?</div>
+    <div class="lang-row">
+      <button class="lang-card" style="background:linear-gradient(135deg,#6BC79A,#3E9C6E);" onclick="selectLanguage('ko')">
+        <div class="lang-emoji">🇰🇷</div><div>한글놀이</div>
+      </button>
+      <button class="lang-card" style="background:linear-gradient(135deg,#6FB3F2,#3E86D8);" onclick="selectLanguage('en')">
+        <div class="lang-emoji">🇺🇸</div><div>영어놀이</div>
+      </button>
+      <button class="lang-card" style="background:linear-gradient(135deg,#F2A66F,#D87A3E);" onclick="selectLanguage('vid')">
+        <div class="lang-emoji">🎬</div><div>영상영어놀이</div>
+      </button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-home">
+    <div class="subtitle" id="homeSubtitle">오늘은 뭐하고 놀까?</div>
+    <div class="topic-grid" id="topicGrid"></div>
+  </div>
+
+  <div class="screen" id="screen-play">
+    <div class="play-header">
+      <div class="topic-title" id="playTitle"></div>
+      <button class="quiz-btn" onclick="startQuiz(currentCatKey)">🎯 퀴즈로 풀기</button>
+    </div>
+    <div class="card-grid" id="cardGrid"></div>
+  </div>
+
+  <div class="screen" id="screen-quiz">
+    <div class="play-header">
+      <div class="topic-title" id="quizProgress"></div>
+      <button class="icon-btn" onclick="replayQuizWord()">🔊</button>
+    </div>
+    <div class="subtitle" id="quizPrompt" style="margin-top:-4px;"></div>
+    <div class="quiz-grid" id="quizGrid"></div>
+  </div>
+
+  <div class="screen" id="screen-collection">
+    <div class="subtitle">모은 스티커판</div>
+    <div class="badge-grid" id="badgeGrid"></div>
+  </div>
+</div>
+
+<script>
+const EN_PALETTE = ['#4CAF7D','#FB7A5A','#4C9FE8','#9C6ADE','#E85D75','#3EACA8','#F4A261','#577590','#C77DFF','#43AA8B','#F9844A','#118AB2','#EF476F','#6C8EBF','#FFB703','#06AED5','#8338EC'];
+const EN_CATEGORIES = {
+  animals: { title:'동물 친구들', icon:'🐶', items:[
+    {word:'Dog', emoji:'🐶'},{word:'Cat', emoji:'🐱'},{word:'Cow', emoji:'🐮'},{word:'Duck', emoji:'🦆'},
+    {word:'Lion', emoji:'🦁'},{word:'Elephant', emoji:'🐘'},{word:'Fish', emoji:'🐟'},{word:'Bird', emoji:'🐦'},
+    {word:'Horse', emoji:'🐴'},{word:'Pig', emoji:'🐷'},{word:'Rabbit', emoji:'🐰'},{word:'Bear', emoji:'🐻'},
+    {word:'Tiger', emoji:'🐯'},{word:'Monkey', emoji:'🐒'},{word:'Sheep', emoji:'🐑'},{word:'Frog', emoji:'🐸'},
+    {word:'Zebra', emoji:'🦓'},{word:'Giraffe', emoji:'🦒'},{word:'Panda', emoji:'🐼'},{word:'Koala', emoji:'🐨'},
+    {word:'Fox', emoji:'🦊'},{word:'Wolf', emoji:'🐺'},{word:'Deer', emoji:'🦌'},{word:'Owl', emoji:'🦉'},
+    {word:'Penguin', emoji:'🐧'},{word:'Chicken', emoji:'🐔'},{word:'Rooster', emoji:'🐓'},{word:'Goat', emoji:'🐐'},
+    {word:'Camel', emoji:'🐫'},{word:'Squirrel', emoji:'🐿️'},{word:'Kangaroo', emoji:'🦘'},{word:'Hippo', emoji:'🦛', wiki:'Hippopotamus'},
+    {word:'Rhino', emoji:'🦏', wiki:'Rhinoceros'},{word:'Peacock', emoji:'🦚'},{word:'Flamingo', emoji:'🦩'},{word:'Swan', emoji:'🦢'},
+    {word:'Parrot', emoji:'🦜'},{word:'Crocodile', emoji:'🐊'},{word:'Snake', emoji:'🐍'},{word:'Hedgehog', emoji:'🦔'},
+  ]},
+  sea: { title:'바다 친구들', icon:'🐬', items:[
+    {word:'Whale', emoji:'🐋'},{word:'Dolphin', emoji:'🐬'},{word:'Shark', emoji:'🦈'},{word:'Octopus', emoji:'🐙'},
+    {word:'Starfish', emoji:'⭐'},{word:'Crab', emoji:'🦀'},{word:'Turtle', emoji:'🐢'},{word:'Seal', emoji:'🦭'},
+    {word:'Squid', emoji:'🦑'},{word:'Lobster', emoji:'🦞'},{word:'Shrimp', emoji:'🦐'},{word:'Jellyfish', emoji:'🪼'},
+    {word:'Otter', emoji:'🦦'},
+  ]},
+  insects: { title:'작은 곤충', icon:'🐝', items:[
+    {word:'Bee', emoji:'🐝'},{word:'Butterfly', emoji:'🦋'},{word:'Ant', emoji:'🐜'},
+    {word:'Ladybug', emoji:'🐞', wiki:'Ladybird'},{word:'Spider', emoji:'🕷️'},{word:'Snail', emoji:'🐌'},
+    {word:'Beetle', emoji:'🪲'},{word:'Cricket', emoji:'🦗'},{word:'Mosquito', emoji:'🦟'},{word:'Worm', emoji:'🪱'},
+  ]},
+  fruits: { title:'맛있는 과일', icon:'🍎', items:[
+    {word:'Apple', emoji:'🍎'},{word:'Banana', emoji:'🍌'},{word:'Orange', emoji:'🍊', wiki:'Orange (fruit)'},
+    {word:'Grape', emoji:'🍇'},{word:'Strawberry', emoji:'🍓'},{word:'Watermelon', emoji:'🍉'},
+    {word:'Pineapple', emoji:'🍍'},{word:'Peach', emoji:'🍑'},{word:'Cherry', emoji:'🍒'},
+    {word:'Lemon', emoji:'🍋'},{word:'Mango', emoji:'🥭'},{word:'Kiwi', emoji:'🥝', wiki:'Kiwifruit'},
+    {word:'Pear', emoji:'🍐'},{word:'Coconut', emoji:'🥥'},{word:'Blueberry', emoji:'🫐'},
+    {word:'Green apple', emoji:'🍏', wiki:'Apple'},{word:'Melon', emoji:'🍈'},{word:'Avocado', emoji:'🥑'},{word:'Olive', emoji:'🫒'},
+  ]},
+  vegetables: { title:'싱싱 채소', icon:'🥕', items:[
+    {word:'Carrot', emoji:'🥕'},{word:'Potato', emoji:'🥔'},{word:'Tomato', emoji:'🍅'},{word:'Corn', emoji:'🌽'},
+    {word:'Broccoli', emoji:'🥦'},{word:'Cucumber', emoji:'🥒'},{word:'Onion', emoji:'🧅'},{word:'Pumpkin', emoji:'🎃'},
+    {word:'Pepper', emoji:'🫑'},{word:'Mushroom', emoji:'🍄'},{word:'Cabbage', emoji:'🥬'},{word:'Eggplant', emoji:'🍆'},
+    {word:'Garlic', emoji:'🧄'},{word:'Sweet potato', emoji:'🍠'},{word:'Peas', emoji:'🫛'},{word:'Beans', emoji:'🫘'},
+  ]},
+  foods: { title:'냠냠 음식', icon:'🍕', items:[
+    {word:'Bread', emoji:'🍞'},{word:'Rice', emoji:'🍚'},{word:'Egg', emoji:'🥚'},{word:'Milk', emoji:'🥛'},
+    {word:'Cheese', emoji:'🧀'},{word:'Pizza', emoji:'🍕'},{word:'Cake', emoji:'🍰'},{word:'Cookie', emoji:'🍪'},
+    {word:'Ice cream', emoji:'🍦'},{word:'Juice', emoji:'🧃'},{word:'Hamburger', emoji:'🍔'},{word:'Hot dog', emoji:'🌭'},
+    {word:'French fries', emoji:'🍟'},{word:'Sandwich', emoji:'🥪'},{word:'Taco', emoji:'🌮'},{word:'Sushi', emoji:'🍣'},
+    {word:'Noodles', emoji:'🍜'},{word:'Donut', emoji:'🍩'},{word:'Candy', emoji:'🍬'},{word:'Chocolate', emoji:'🍫'},
+    {word:'Popcorn', emoji:'🍿'},{word:'Honey', emoji:'🍯'},{word:'Butter', emoji:'🧈'},{word:'Pancakes', emoji:'🥞'},
+    {word:'Waffle', emoji:'🧇'},{word:'Soup', emoji:'🍲'},
+  ]},
+  vehicles: { title:'씽씽 탈것', icon:'🚗', items:[
+    {word:'Car', emoji:'🚗'},{word:'Bus', emoji:'🚌'},{word:'Train', emoji:'🚆'},{word:'Airplane', emoji:'✈️'},
+    {word:'Bicycle', emoji:'🚲'},{word:'Truck', emoji:'🚚'},{word:'Boat', emoji:'⛵'},{word:'Motorcycle', emoji:'🏍️'},
+    {word:'Helicopter', emoji:'🚁'},{word:'Ambulance', emoji:'🚑'},{word:'Taxi', emoji:'🚕'},{word:'Ship', emoji:'🚢'},
+    {word:'Rocket', emoji:'🚀'},{word:'Tractor', emoji:'🚜'},{word:'Fire truck', emoji:'🚒', wiki:'Fire engine'},
+    {word:'Scooter', emoji:'🛴'},{word:'Skateboard', emoji:'🛹'},{word:'Canoe', emoji:'🛶'},{word:'Sled', emoji:'🛷'},
+    {word:'Subway', emoji:'🚇'},{word:'Tram', emoji:'🚊'},
+  ]},
+  home: { title:'우리 집 물건', icon:'🛏️', items:[
+    {word:'Bed', emoji:'🛏️'},{word:'Chair', emoji:'🪑'},{word:'Cup', emoji:'☕'},{word:'Spoon', emoji:'🥄'},
+    {word:'Fork', emoji:'🍴'},{word:'Plate', emoji:'🍽️'},{word:'Ball', emoji:'⚽'},{word:'Book', emoji:'📖'},
+    {word:'Shoe', emoji:'👟'},{word:'Clock', emoji:'🕐'},{word:'Lamp', emoji:'💡'},{word:'Door', emoji:'🚪'},
+    {word:'Window', emoji:'🪟'},{word:'Key', emoji:'🔑'},{word:'Phone', emoji:'📱'},{word:'Television', emoji:'📺'},
+    {word:'Sofa', emoji:'🛋️'},{word:'Mirror', emoji:'🪞'},{word:'Toothbrush', emoji:'🪥'},{word:'Soap', emoji:'🧼'},
+    {word:'Umbrella', emoji:'☂️'},{word:'Scissors', emoji:'✂️'},{word:'Candle', emoji:'🕯️'},{word:'Bag', emoji:'👜'},
+    {word:'Broom', emoji:'🧹'},{word:'Bucket', emoji:'🪣'},{word:'Bathtub', emoji:'🛁'},{word:'Toilet', emoji:'🚽'},
+    {word:'Hammer', emoji:'🔨'},{word:'Wrench', emoji:'🔧'},{word:'Ladder', emoji:'🪜'},{word:'Basket', emoji:'🧺'},
+    {word:'Gift', emoji:'🎁'},{word:'Trash can', emoji:'🗑️', wiki:'Waste container'},{word:'Envelope', emoji:'✉️'},{word:'Newspaper', emoji:'📰'},
+    {word:'Calendar', emoji:'📅'},{word:'Vase', emoji:'🏺'},{word:'Bell', emoji:'🔔'},{word:'Battery', emoji:'🔋'},
+  ]},
+  clothes: { title:'옷 입어요', icon:'👕', items:[
+    {word:'Shirt', emoji:'👕'},{word:'Pants', emoji:'👖'},{word:'Hat', emoji:'🎩'},{word:'Sock', emoji:'🧦'},
+    {word:'Dress', emoji:'👗'},{word:'Jacket', emoji:'🧥'},{word:'Glove', emoji:'🧤'},{word:'Scarf', emoji:'🧣'},
+    {word:'Boot', emoji:'🥾'},{word:'Sunglasses', emoji:'🕶️'},{word:'Ring', emoji:'💍'},{word:'Crown', emoji:'👑'},
+    {word:'Backpack', emoji:'🎒'},
+  ]},
+  body: { title:'내 몸', icon:'✋', items:[
+    {word:'Eye', emoji:'👁️'},{word:'Nose', emoji:'👃'},{word:'Mouth', emoji:'👄'},{word:'Ear', emoji:'👂'},
+    {word:'Hand', emoji:'✋'},{word:'Foot', emoji:'🦶'},{word:'Arm', emoji:'💪'},{word:'Leg', emoji:'🦵'},{word:'Tooth', emoji:'🦷'},
+    {word:'Tongue', emoji:'👅'},{word:'Finger', emoji:'👆'},
+  ]},
+  family: { title:'우리 가족', icon:'👨‍👩‍👧', items:[
+    {word:'Mom', emoji:'👩', wiki:'Mother'},{word:'Dad', emoji:'👨', wiki:'Father'},{word:'Baby', emoji:'👶', wiki:'Infant'},
+    {word:'Sister', emoji:'👧'},{word:'Brother', emoji:'👦'},{word:'Grandma', emoji:'👵', wiki:'Grandparent'},{word:'Grandpa', emoji:'👴', wiki:'Grandparent'},
+    {word:'Friend', emoji:'👫'},
+  ]},
+  colors: { title:'예쁜 색깔', icon:'🎨', items:[
+    {word:'Red', emoji:'🟥', wiki:'Red'},{word:'Blue', emoji:'🟦', wiki:'Blue'},{word:'Yellow', emoji:'🟨', wiki:'Yellow'},
+    {word:'Green', emoji:'🟩', wiki:'Green'},{word:'Purple', emoji:'🟪', wiki:'Purple'},{word:'Pink', emoji:'🩷', wiki:'Pink'},
+    {word:'Black', emoji:'⬛', wiki:'Black'},{word:'White', emoji:'⬜', wiki:'White'},{word:'Brown', emoji:'🟫', wiki:'Brown'},
+    {word:'Gray', emoji:'🔘', wiki:'Gray'},
+  ]},
+  numbers: { title:'숫자 놀이', icon:'🔢', items:[
+    {word:'One', emoji:'1️⃣', wiki:'1 (number)'},{word:'Two', emoji:'2️⃣', wiki:'2 (number)'},{word:'Three', emoji:'3️⃣', wiki:'3 (number)'},
+    {word:'Four', emoji:'4️⃣', wiki:'4 (number)'},{word:'Five', emoji:'5️⃣', wiki:'5 (number)'},{word:'Six', emoji:'6️⃣', wiki:'6 (number)'},
+    {word:'Seven', emoji:'7️⃣', wiki:'7 (number)'},{word:'Eight', emoji:'8️⃣', wiki:'8 (number)'},{word:'Nine', emoji:'9️⃣', wiki:'9 (number)'},
+    {word:'Ten', emoji:'🔟', wiki:'10 (number)'},{word:'Eleven', emoji:'🔢', wiki:'11 (number)'},{word:'Twelve', emoji:'🔢', wiki:'12 (number)'},
+    {word:'Thirteen', emoji:'🔢', wiki:'13 (number)'},{word:'Fourteen', emoji:'🔢', wiki:'14 (number)'},{word:'Fifteen', emoji:'🔢', wiki:'15 (number)'},
+    {word:'Sixteen', emoji:'🔢', wiki:'16 (number)'},{word:'Seventeen', emoji:'🔢', wiki:'17 (number)'},{word:'Eighteen', emoji:'🔢', wiki:'18 (number)'},
+    {word:'Nineteen', emoji:'🔢', wiki:'19 (number)'},{word:'Twenty', emoji:'🔢', wiki:'20 (number)'},
+  ]},
+  weather: { title:'오늘 날씨', icon:'☀️', items:[
+    {word:'Sun', emoji:'☀️'},{word:'Rain', emoji:'🌧️'},{word:'Cloud', emoji:'☁️'},{word:'Snow', emoji:'❄️'},
+    {word:'Wind', emoji:'💨'},{word:'Storm', emoji:'⛈️'},{word:'Rainbow', emoji:'🌈'},{word:'Fog', emoji:'🌫️'},
+    {word:'Thunder', emoji:'⚡'},{word:'Tornado', emoji:'🌪️'},{word:'Hot', emoji:'🥵'},{word:'Cold', emoji:'🥶'},
+  ]},
+  nature: { title:'자연 풍경', icon:'🌳', items:[
+    {word:'Tree', emoji:'🌳'},{word:'Flower', emoji:'🌸'},{word:'Grass', emoji:'🌱'},{word:'Mountain', emoji:'⛰️'},
+    {word:'River', emoji:'🏞️'},{word:'Star', emoji:'⭐'},{word:'Moon', emoji:'🌙'},{word:'Sky', emoji:'🌤️'},
+    {word:'Ocean', emoji:'🌊'},{word:'Beach', emoji:'🏖️'},{word:'Forest', emoji:'🌲'},{word:'Desert', emoji:'🏜️'},
+    {word:'Volcano', emoji:'🌋'},{word:'Island', emoji:'🏝️'},{word:'Rock', emoji:'🪨'},{word:'Snowman', emoji:'⛄'},
+    {word:'Sunrise', emoji:'🌅'},{word:'Sunset', emoji:'🌇'},
+  ]},
+  instruments: { title:'악기 연주', icon:'🎹', items:[
+    {word:'Piano', emoji:'🎹'},{word:'Guitar', emoji:'🎸'},{word:'Drum', emoji:'🥁'},{word:'Violin', emoji:'🎻'},{word:'Trumpet', emoji:'🎺'},
+    {word:'Flute', emoji:'🪈'},{word:'Saxophone', emoji:'🎷'},{word:'Accordion', emoji:'🪗'},{word:'Banjo', emoji:'🪕'},
+  ]},
+  toys: { title:'장난감', icon:'🧸', items:[
+    {word:'Doll', emoji:'🪆'},{word:'Blocks', emoji:'🧱', wiki:'Toy block'},{word:'Puzzle', emoji:'🧩', wiki:'Jigsaw puzzle'},
+    {word:'Balloon', emoji:'🎈'},{word:'Kite', emoji:'🪁'},{word:'Teddy bear', emoji:'🧸'},{word:'Robot', emoji:'🤖'},
+    {word:'Yo-yo', emoji:'🪀'},{word:'Dice', emoji:'🎲'},{word:'Chess', emoji:'♟️'},
+  ]},
+  shapes: { title:'도형 모양', icon:'🔵', items:[
+    {word:'Circle', emoji:'🔵'},{word:'Square', emoji:'⬛'},{word:'Triangle', emoji:'🔺'},{word:'Rectangle', emoji:'🟧'},
+    {word:'Star shape', emoji:'⭐', wiki:'Star polygon'},{word:'Heart shape', emoji:'❤️', wiki:'Heart'},{word:'Diamond shape', emoji:'♦️', wiki:'Rhombus'},{word:'Oval', emoji:'🥚'},
+  ]},
+  emotions: { title:'기분이 어때', icon:'😊', items:[
+    {word:'Happy', emoji:'😊'},{word:'Sad', emoji:'😢'},{word:'Angry', emoji:'😠'},{word:'Surprised', emoji:'😲'},
+    {word:'Scared', emoji:'😨'},{word:'Sleepy', emoji:'😴'},{word:'Excited', emoji:'🤩'},{word:'Shy', emoji:'😳'},
+    {word:'Sick', emoji:'🤒'},{word:'Crying', emoji:'😭'},
+  ]},
+  actions: { title:'움직여요', icon:'🏃', items:[
+    {word:'Run', emoji:'🏃'},{word:'Walk', emoji:'🚶'},{word:'Jump', emoji:'🤸', wiki:'Jumping'},{word:'Swim', emoji:'🏊'},
+    {word:'Dance', emoji:'💃'},{word:'Sing', emoji:'🎤', wiki:'Singing'},{word:'Sleep', emoji:'😴'},{word:'Eat', emoji:'🍽️', wiki:'Eating'},
+    {word:'Drink', emoji:'🥤', wiki:'Drinking'},{word:'Sit', emoji:'🧎', wiki:'Sitting'},{word:'Stand', emoji:'🧍', wiki:'Standing'},{word:'Clap', emoji:'👏', wiki:'Clapping'},
+  ]},
+};
+const KO_PALETTE = { consonants:'#4C9FE8', vowels:'#FB7A5A' };
+const KO_CATEGORIES = {
+  consonants: { title:'자음 배우기', icon:'ㄱ', items:[
+    {letter:'ㄱ', name:'기역', example:'가방', emoji:'🎒'},
+    {letter:'ㄴ', name:'니은', example:'나비', emoji:'🦋'},
+    {letter:'ㄷ', name:'디귿', example:'다람쥐', emoji:'🐿️'},
+    {letter:'ㄹ', name:'리을', example:'라면', emoji:'🍜'},
+    {letter:'ㅁ', name:'미음', example:'마늘', emoji:'🧄'},
+    {letter:'ㅂ', name:'비읍', example:'바나나', emoji:'🍌'},
+    {letter:'ㅅ', name:'시옷', example:'사과', emoji:'🍎'},
+    {letter:'ㅇ', name:'이응', example:'아기', emoji:'👶'},
+    {letter:'ㅈ', name:'지읒', example:'자동차', emoji:'🚗'},
+    {letter:'ㅊ', name:'치읓', example:'치즈', emoji:'🧀'},
+    {letter:'ㅋ', name:'키읔', example:'코끼리', emoji:'🐘'},
+    {letter:'ㅌ', name:'티읕', example:'토끼', emoji:'🐰'},
+    {letter:'ㅍ', name:'피읖', example:'포도', emoji:'🍇'},
+    {letter:'ㅎ', name:'히읗', example:'호랑이', emoji:'🐯'},
+  ]},
+  vowels: { title:'모음 배우기', icon:'ㅏ', items:[
+    {letter:'ㅏ', name:'아', example:'아이스크림', emoji:'🍦'},
+    {letter:'ㅑ', name:'야', example:'야구공', emoji:'⚾'},
+    {letter:'ㅓ', name:'어', example:'어머니', emoji:'👩'},
+    {letter:'ㅕ', name:'여', example:'여우', emoji:'🦊'},
+    {letter:'ㅗ', name:'오', example:'오리', emoji:'🦆'},
+    {letter:'ㅛ', name:'요', example:'요리사', emoji:'👨‍🍳'},
+    {letter:'ㅜ', name:'우', example:'우산', emoji:'☂️'},
+    {letter:'ㅠ', name:'유', example:'유치원', emoji:'🏫'},
+    {letter:'ㅡ', name:'으', example:'그네', emoji:'🛝'},
+    {letter:'ㅣ', name:'이', example:'이빨', emoji:'🦷'},
+  ]},
+};
+
+Object.keys(EN_CATEGORIES).forEach((key, i) => { EN_CATEGORIES[key].color = EN_PALETTE[i % EN_PALETTE.length]; });
+Object.keys(KO_CATEGORIES).forEach(key => { KO_CATEGORIES[key].color = KO_PALETTE[key]; });
+const CATEGORY_SETS = { en: EN_CATEGORIES, ko: KO_CATEGORIES, vid: EN_CATEGORIES };
+const APP_TITLES = { en: '토끼별 영어놀이', ko: '토끼별 한글놀이', vid: '토끼별 영상영어놀이' };
+let currentLanguage = null;
+let currentCatKey = null;
+
+/* ---------- 상태 저장 (언어별로 구분, 별은 공용) ---------- */
+function loadState(){
+  try{ const raw = localStorage.getItem('bunny_combo_state_v1'); if (raw) return JSON.parse(raw); }catch(e){}
+  return { stars:0, discovered:{} };
+}
+let STATE = loadState();
+function saveState(){ try{ localStorage.setItem('bunny_combo_state_v1', JSON.stringify(STATE)); }catch(e){} }
+function updateStarCounter(){ document.getElementById('starCounter').textContent = `⭐ ${STATE.stars}`; }
+function addStar(n){ STATE.stars += n; saveState(); updateStarCounter(); }
+function stateKeyFor(catKey){ return `${currentLanguage}:${catKey}`; }
+function markDiscovered(catKey, id){
+  const sk = stateKeyFor(catKey);
+  if (!STATE.discovered[sk]) STATE.discovered[sk] = [];
+  if (!STATE.discovered[sk].includes(id)) { STATE.discovered[sk].push(id); saveState(); return true; }
+  return false;
+}
+
+/* ---------- 이미지 (영어=en.wikipedia, 한글 예시단어=ko.wikipedia) ---------- */
+const imageCache = {};
+async function fetchThumbnail(title, lang){
+  const key = `${lang}:${title}`;
+  if (key in imageCache) return imageCache[key];
+  try{
+    const res = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+    if(!res.ok) throw new Error('no data');
+    const data = await res.json();
+    const url = (data.thumbnail && data.thumbnail.source) || null;
+    imageCache[key] = url; return url;
+  }catch(e){ imageCache[key] = null; return null; }
+}
+function renderThumb(thumbEl, info){
+  if (!thumbEl) return;
+  fetchThumbnail(info.title, info.lang).then(url => {
+    if (!thumbEl.isConnected) return;
+    if (url) {
+      const img = document.createElement('img');
+      img.src = url; img.alt = info.title;
+      img.onerror = () => { thumbEl.innerHTML = `<div class="fallback-emoji">${info.emoji}</div>`; };
+      thumbEl.innerHTML = ''; thumbEl.appendChild(img);
+    } else {
+      thumbEl.innerHTML = `<div class="fallback-emoji">${info.emoji}</div>`;
+    }
+  });
+}
+let thumbObserver = null;
+function getThumbObserver(){
+  if (thumbObserver) return thumbObserver;
+  thumbObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        thumbObserver.unobserve(el);
+        renderThumb(el, { title: el.dataset.title, lang: el.dataset.lang, emoji: el.dataset.emoji });
+      }
+    });
+  }, { root: null, rootMargin: '200px', threshold: 0.01 });
+  return thumbObserver;
+}
+function observeThumb(thumbEl, info){
+  thumbEl.dataset.title = info.title;
+  thumbEl.dataset.lang = info.lang;
+  thumbEl.dataset.emoji = info.emoji;
+  getThumbObserver().observe(thumbEl);
+}
+
+/* ---------- 음성 (영어/한국어 공용) ---------- */
+let voices = [];
+function loadVoices(){ voices = speechSynthesis.getVoices(); }
+loadVoices();
+if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices;
+function speak(text, lang){
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang; u.rate = 0.82; u.pitch = 1.12;
+    const voice = voices.find(v => v.lang === lang) || voices.find(v => v.lang && v.lang.startsWith(lang.slice(0,2)));
+    if (voice) u.voice = voice;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ---------- 효과음 ---------- */
+let audioCtx;
+function getCtx(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function playTone(freqs, dur){
+  try{
+    const ctx = getCtx(); let t = ctx.currentTime;
+    freqs.forEach(f => {
+      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.type = 'sine'; osc.frequency.value = f;
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.33, t+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t); osc.stop(t+dur+0.02);
+      t += dur*0.75;
+    });
+  }catch(e){}
+}
+function playChime(){ playTone([523.25, 659.25, 783.99], 0.13); }
+function playRetry(){ playTone([320], 0.16); }
+
+/* ---------- 칭찬 말풍선 + 컨페티 ---------- */
+const PRAISE_EN = ['Great job!','Awesome!','Wonderful!','Super!','You did it!','Amazing!','Fantastic!','Nice one!'];
+const PRAISE_KO = ['잘했어요!','최고예요!','우와!','대단해요!','완벽해요!','신난다!'];
+function showPraise(anchorEl){
+  const arr = currentLanguage === 'ko' ? PRAISE_KO : PRAISE_EN;
+  const bubble = document.createElement('div');
+  bubble.className = 'praise-bubble';
+  bubble.textContent = arr[Math.floor(Math.random()*arr.length)];
+  document.body.appendChild(bubble);
+  const rect = anchorEl ? anchorEl.getBoundingClientRect() : { left: window.innerWidth/2, top: window.innerHeight/3, width:0 };
+  bubble.style.left = `${rect.left + rect.width/2}px`;
+  bubble.style.top = `${rect.top}px`;
+  requestAnimationFrame(()=> bubble.classList.add('show'));
+  setTimeout(()=> bubble.remove(), 1100);
+  const bunny = document.getElementById('bunny');
+  bunny.classList.remove('hop'); void bunny.offsetWidth; bunny.classList.add('hop');
+}
+function burstConfetti(anchorEl, count){
+  const emojis = ['🎉','⭐','✨','🎊','💛','💚','💙'];
+  const rect = anchorEl ? anchorEl.getBoundingClientRect() : { left: window.innerWidth/2, top: window.innerHeight/2, width:0, height:0 };
+  const originX = rect.left + rect.width/2, originY = rect.top + rect.height/2;
+  for(let i=0;i<count;i++){
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    const angle = Math.random()*Math.PI*2, dist = 60 + Math.random()*100;
+    piece.style.left = `${originX}px`; piece.style.top = `${originY}px`;
+    piece.style.setProperty('--dx', `${Math.cos(angle)*dist}px`);
+    piece.style.setProperty('--dy', `${Math.sin(angle)*dist - 50}px`);
+    document.body.appendChild(piece);
+    setTimeout(()=> piece.remove(), 900);
+  }
+}
+function celebrate(anchorEl, stars){
+  playChime(); burstConfetti(anchorEl, 16); showPraise(anchorEl); addStar(stars);
+}
+
+/* ---------- 화면 전환 ---------- */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const topLevel = (id === 'screen-language' || id === 'screen-home');
+  document.getElementById('homeBtn').classList.toggle('show', !topLevel);
+  document.getElementById('tabbar').style.display = (id === 'screen-play') ? 'flex' : 'none';
+}
+function goHome(){ showScreen('screen-home'); speechSynthesis.cancel(); quizState = null; }
+
+function shadeColor(hex, percent){
+  const f = parseInt(hex.slice(1), 16), t = percent < 0 ? 0 : 255, p = Math.abs(percent) / 100;
+  const R = f >> 16, G = (f >> 8) & 0x00FF, B = f & 0x0000FF;
+  return "#" + (0x1000000 + (Math.round((t - R) * p) + R) * 0x10000 +
+    (Math.round((t - G) * p) + G) * 0x100 + (Math.round((t - B) * p) + B)).toString(16).slice(1);
+}
+
+/* ---------- 언어 선택 ---------- */
+function selectLanguage(lang){
+  currentLanguage = lang;
+  document.getElementById('appTitle').textContent = APP_TITLES[lang];
+  document.getElementById('homeSubtitle').textContent = lang === 'ko' ? '오늘은 뭐 배울까?' : (lang === 'vid' ? '오늘은 어떤 영상을 볼까?' : '오늘은 뭐하고 놀까?');
+  buildHome();
+  showScreen('screen-home');
+}
+
+/* ---------- 홈 화면 ---------- */
+function buildHome(){
+  const cats = CATEGORY_SETS[currentLanguage];
+  const grid = document.getElementById('topicGrid');
+  grid.classList.toggle('two-col', currentLanguage === 'ko');
+  grid.innerHTML = '';
+  Object.entries(cats).forEach(([key, cat]) => {
+    const btn = document.createElement('button');
+    btn.className = 'topic-card';
+    btn.style.background = `linear-gradient(135deg, ${shadeColor(cat.color, 20)}, ${shadeColor(cat.color, -18)})`;
+    btn.innerHTML = `<div class="icon-badge">${cat.icon}</div><div>${cat.title}</div><div class="count">${cat.items.length}개</div>`;
+    btn.onclick = () => openTopic(key);
+    grid.appendChild(btn);
+  });
+  const tabbar = document.getElementById('tabbar');
+  tabbar.innerHTML = '';
+  Object.entries(cats).forEach(([key, cat]) => {
+    const tab = document.createElement('button');
+    tab.className = 'tab'; tab.dataset.key = key;
+    tab.innerHTML = `<span>${cat.icon}</span>${cat.title}`;
+    tab.onclick = () => openTopic(key);
+    tabbar.appendChild(tab);
+  });
+}
+
+/* ---------- 카드 화면 (영어=단어사진, 한글=글자) ---------- */
+function openTopic(key){
+  currentCatKey = key;
+  if (currentLanguage === 'en') openTopicEN(key);
+  else if (currentLanguage === 'vid') openTopicVID(key);
+  else openTopicKO(key);
+  showScreen('screen-play');
+  document.querySelectorAll('.tab').forEach(t => {
+    const active = t.dataset.key === key;
+    const col = CATEGORY_SETS[currentLanguage][key].color;
+    t.classList.toggle('active', active);
+    t.style.background = active ? `linear-gradient(135deg, ${shadeColor(col, 20)}, ${shadeColor(col, -18)})` : '';
+  });
+}
+function openTopicEN(key){
+  const cat = EN_CATEGORIES[key];
+  document.getElementById('playTitle').textContent = cat.title;
+  const grid = document.getElementById('cardGrid');
+  grid.innerHTML = '';
+  cat.items.forEach((item) => {
+    const card = document.createElement('button');
+    card.className = 'word-card';
+    const thumbId = `thumb-en-${key}-${item.word.replace(/\s+/g,'_')}`;
+    card.innerHTML = `<div class="thumb" id="${thumbId}"><div class="spinner"></div></div><div class="word">${item.word}</div>`;
+    card.onclick = () => {
+      playChime();
+      setTimeout(()=> speak(item.word, 'en-US'), 150);
+      card.classList.remove('bounce'); void card.offsetWidth; card.classList.add('bounce');
+      setTimeout(()=> card.classList.remove('bounce'), 700);
+      markDiscovered(key, item.word);
+      addStar(1); showPraise(card); burstConfetti(card, 12);
+    };
+    grid.appendChild(card);
+    observeThumb(document.getElementById(thumbId), { title: item.wiki || item.word, lang:'en', emoji:item.emoji });
+  });
+}
+
+/* ---------- 영상영어놀이: videos/폴더의 mp4를 카드에 재생 (없으면 이모지로 대체) ---------- */
+function slugify(word){
+  return word.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+let videoObserver = null;
+function getVideoObserver(){
+  if (videoObserver) return videoObserver;
+  videoObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        videoObserver.unobserve(el);
+        loadVideoThumb(el, { word: el.dataset.word, emoji: el.dataset.emoji });
+      }
+    });
+  }, { root: null, rootMargin: '150px', threshold: 0.01 });
+  return videoObserver;
+}
+function observeVideoThumb(thumbEl, item){
+  thumbEl.dataset.word = item.word;
+  thumbEl.dataset.emoji = item.emoji;
+  getVideoObserver().observe(thumbEl);
+}
+function loadVideoThumb(thumbEl, info){
+  if (!thumbEl) return;
+  const video = document.createElement('video');
+  video.muted = true; video.loop = true; video.playsInline = true; video.preload = 'metadata';
+  video.onerror = () => { thumbEl.innerHTML = `<div class="fallback-emoji">${info.emoji}</div>`; };
+  video.onloadeddata = () => { video.play().catch(()=>{}); };
+  video.src = `videos/${slugify(info.word)}.mp4`;
+  thumbEl.innerHTML = '';
+  thumbEl.appendChild(video);
+}
+function openTopicVID(key){
+  const cat = EN_CATEGORIES[key];
+  document.getElementById('playTitle').textContent = cat.title;
+  const grid = document.getElementById('cardGrid');
+  grid.innerHTML = '';
+  cat.items.forEach((item) => {
+    const card = document.createElement('button');
+    card.className = 'word-card';
+    const thumbId = `thumb-vid-${key}-${item.word.replace(/\s+/g,'_')}`;
+    card.innerHTML = `<div class="thumb" id="${thumbId}"><div class="spinner"></div></div><div class="word">${item.word}</div>`;
+    card.onclick = () => {
+      playChime();
+      setTimeout(()=> speak(item.word, 'en-US'), 150);
+      const vidEl = document.querySelector(`#${thumbId} video`);
+      if (vidEl) { vidEl.currentTime = 0; vidEl.play().catch(()=>{}); }
+      card.classList.remove('bounce'); void card.offsetWidth; card.classList.add('bounce');
+      setTimeout(()=> card.classList.remove('bounce'), 700);
+      markDiscovered(key, item.word);
+      addStar(1); showPraise(card); burstConfetti(card, 12);
+    };
+    grid.appendChild(card);
+    observeVideoThumb(document.getElementById(thumbId), item);
+  });
+}
+function openTopicKO(key){
+  const cat = KO_CATEGORIES[key];
+  document.getElementById('playTitle').textContent = cat.title;
+  const grid = document.getElementById('cardGrid');
+  grid.innerHTML = '';
+  cat.items.forEach((item) => {
+    const card = document.createElement('button');
+    card.className = 'letter-card';
+    const thumbId = `thumb-ko-${key}-${item.letter}`;
+    card.innerHTML = `
+      <span class="spark s1">⭐</span><span class="spark s2">✨</span>
+      <div class="big-letter" style="color:${cat.color}">${item.letter}</div>
+      <div class="thumb" id="${thumbId}"><div class="spinner"></div></div>
+      <div class="example">${item.example}</div>
+    `;
+    card.onclick = () => {
+      speak(item.name, 'ko-KR');
+      setTimeout(()=> speak(item.example, 'ko-KR'), 700);
+      card.classList.remove('bounce'); void card.offsetWidth; card.classList.add('bounce');
+      setTimeout(()=> card.classList.remove('bounce'), 700);
+      markDiscovered(key, item.letter);
+      addStar(1); showPraise(card); burstConfetti(card, 12);
+    };
+    grid.appendChild(card);
+    observeThumb(document.getElementById(thumbId), { title: item.example, lang:'ko', emoji:item.emoji });
+  });
+}
+
+/* ---------- 퀴즈 ---------- */
+function shuffleArray(arr){
+  for (let i = arr.length-1; i>0; i--){ const j = Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+  return arr;
+}
+let quizState = null;
+function startQuiz(catKey){
+  if (!catKey) return;
+  if (currentLanguage === 'ko') startQuizKO(catKey); else startQuizEN(catKey);
+}
+function startQuizEN(catKey){
+  const cat = EN_CATEGORIES[catKey];
+  const pool = shuffleArray([...cat.items]);
+  const qCount = Math.min(5, pool.length);
+  const questions = pool.slice(0, qCount).map(target => {
+    const distractors = shuffleArray(cat.items.filter(w => w.word !== target.word)).slice(0,3);
+    return { target, options: shuffleArray([target, ...distractors]) };
+  });
+  quizState = { lang:'en', catKey, questions, qIndex: 0 };
+  showScreen('screen-quiz');
+  renderQuizQuestion();
+}
+function startQuizKO(catKey){
+  const cat = KO_CATEGORIES[catKey];
+  const pool = shuffleArray([...cat.items]);
+  const qCount = Math.min(5, pool.length);
+  const questions = pool.slice(0, qCount).map(target => {
+    const distractors = shuffleArray(cat.items.filter(w => w.letter !== target.letter)).slice(0,3);
+    return { target, options: shuffleArray([target, ...distractors]) };
+  });
+  quizState = { lang:'ko', catKey, questions, qIndex: 0 };
+  showScreen('screen-quiz');
+  renderQuizQuestion();
+}
+function renderQuizQuestion(){
+  const q = quizState.questions[quizState.qIndex];
+  document.getElementById('quizProgress').textContent = `문제 ${quizState.qIndex+1} / ${quizState.questions.length}`;
+  const grid = document.getElementById('quizGrid');
+  grid.innerHTML = '';
+  if (quizState.lang === 'en') {
+    document.getElementById('quizPrompt').textContent = '소리를 듣고 알맞은 그림을 골라봐!';
+    q.options.forEach((opt, i) => {
+      const card = document.createElement('button');
+      card.className = 'quiz-card';
+      const thumbId = `qthumb-${i}`;
+      card.innerHTML = `<div class="thumb" id="${thumbId}"><div class="spinner"></div></div>`;
+      card.onclick = () => handleQuizAnswer(opt, card, 'word');
+      grid.appendChild(card);
+      renderThumb(document.getElementById(thumbId), { title: opt.wiki || opt.word, lang:'en', emoji: opt.emoji });
+    });
+    setTimeout(()=> speak(q.target.word, 'en-US'), 350);
+  } else {
+    document.getElementById('quizPrompt').textContent = '소리를 듣고 알맞은 글자를 골라봐!';
+    const cat = KO_CATEGORIES[quizState.catKey];
+    q.options.forEach((opt) => {
+      const card = document.createElement('button');
+      card.className = 'quiz-card';
+      card.innerHTML = `<div class="big-letter" style="color:${cat.color}">${opt.letter}</div>`;
+      card.onclick = () => handleQuizAnswer(opt, card, 'letter');
+      grid.appendChild(card);
+    });
+    setTimeout(()=> speak(q.target.name, 'ko-KR'), 350);
+  }
+}
+function replayQuizWord(){
+  if (!quizState) return;
+  const q = quizState.questions[quizState.qIndex];
+  if (quizState.lang === 'en') speak(q.target.word, 'en-US');
+  else speak(q.target.name, 'ko-KR');
+}
+function handleQuizAnswer(opt, card, kind){
+  const q = quizState.questions[quizState.qIndex];
+  const isCorrect = kind === 'word' ? (opt.word === q.target.word) : (opt.letter === q.target.letter);
+  if (isCorrect){
+    card.classList.add('correct-flash');
+    celebrate(card, 2);
+    setTimeout(()=>{
+      quizState.qIndex++;
+      if (quizState.qIndex >= quizState.questions.length) finishQuiz();
+      else renderQuizQuestion();
+    }, 750);
+  } else {
+    playRetry();
+    card.classList.add('shake');
+    setTimeout(()=> card.classList.remove('shake'), 400);
+  }
+}
+function finishQuiz(){
+  document.getElementById('quizPrompt').textContent = '참 잘했어요!';
+  document.getElementById('quizGrid').innerHTML = `
+    <div class="quiz-result">
+      <div style="font-size:52px;">🏆</div>
+      <button class="quiz-btn" onclick="startQuiz(quizState.catKey)">다시하기</button>
+      <button class="quiz-btn" onclick="goHome()">홈으로</button>
+    </div>`;
+  burstConfetti(null, 30);
+  playChime();
+}
+
+/* ---------- 컬렉션(스티커판) ---------- */
+function openCollection(){
+  if (!currentLanguage) { showScreen('screen-language'); return; }
+  const cats = CATEGORY_SETS[currentLanguage];
+  const grid = document.getElementById('badgeGrid');
+  grid.innerHTML = '';
+  Object.entries(cats).forEach(([key, cat]) => {
+    const sk = stateKeyFor(key);
+    const done = (STATE.discovered[sk] || []).length;
+    const total = cat.items.length;
+    const complete = done >= total;
+    const badge = document.createElement('div');
+    badge.className = 'badge' + (complete ? ' complete' : '');
+    if (complete) badge.style.background = `linear-gradient(135deg, ${shadeColor(cat.color, 20)}, ${shadeColor(cat.color, -18)})`;
+    badge.innerHTML = `<div class="icon-badge">${cat.icon}</div><div>${cat.title}</div><div class="badge-progress">${done}/${total}${complete ? ' ✅' : ''}</div>`;
+    grid.appendChild(badge);
+  });
+  showScreen('screen-collection');
+}
+
+/* ---------- 스와이프로 카테고리 이동 ---------- */
+function attachSwipe(el, onSwipe){
+  let startX = 0, startY = 0;
+  el.addEventListener('touchstart', e => {
+    const t = e.changedTouches[0]; startX = t.clientX; startY = t.clientY;
+  }, { passive:true });
+  el.addEventListener('touchend', e => {
+    const t = e.changedTouches[0];
+    const dx = t.clientX - startX, dy = t.clientY - startY;
+    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4) onSwipe(dx < 0 ? 'left' : 'right');
+  }, { passive:true });
+}
+attachSwipe(document.getElementById('screen-play'), (dir) => {
+  const keys = Object.keys(CATEGORY_SETS[currentLanguage]);
+  let idx = keys.indexOf(currentCatKey);
+  idx = dir === 'left' ? (idx + 1) % keys.length : (idx - 1 + keys.length) % keys.length;
+  openTopic(keys[idx]);
+});
+
+updateStarCounter();
+
+</script>
+</body>
+</html>
